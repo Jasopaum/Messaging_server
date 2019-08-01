@@ -3,13 +3,16 @@
         <title>Chat</title>
     </head>
     <body>
+
         <form id="login" onsubmit="register(); return false;">
             <pre> Who are you? </pre>
             <input type="text" id="clientName" />
             <input type="submit" />
         </form>
-
+        
         <textarea readonly="true" id="textArea" style="resize:none" rows="20" cols="50" wrap="hard">
+        </textarea>
+        <textarea readonly="true" id="presentUsers" style="resize:none" rows="20" cols="25" wrap="hard">
         </textarea>
         
         <form id="chatbox" onsubmit="sendMessage(); return false;">
@@ -41,19 +44,27 @@
                                         "src": clientName,
                                         "dst": recipient,
                                         "msg": message}));
-                
+
                 var textArea = document.getElementById("textArea");
                 textArea.value = textArea.value + "You >> " + recipient + ": " + message + "\n";
                 message.value = "";
             }
-        
+
             ws.onmessage = function(event) {
                 data = JSON.parse(event.data);
                 var textArea = document.getElementById("textArea");
+                var presentUsers = document.getElementById("presentUsers");
+
                 if (data["cmd"] == "recv") {
                     textArea.value = textArea.value + data["src"] + " >> " + data["msg"] + "\n";
                 } else if (data["cmd"] == "err") {
                     textArea.value = textArea.value + "Error: " + data["msg"] + "\n";
+                } else if (data["cmd"] == "notifusr") {
+                    // Do not display client name in list of users
+                    var otherUsers = data["usr"].filter(function(value, index, arr){
+                        return value != clientName;
+                    });
+                    presentUsers.value = otherUsers.join("\n");
                 }
             };
         

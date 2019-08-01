@@ -4,11 +4,13 @@ import json
 
 CLIENTS = {}
 
-"""
-async def notify_users():
+
+async def notify_new_user(name):
+
+    list_users = [c for c in CLIENTS.keys()]
+    to_send = json.dumps({"cmd": "notifusr", "usr": list_users})
     if CLIENTS:
-        # Tell that new user arrived
-"""
+        await asyncio.wait([c.send(to_send) for c in CLIENTS.values()])
 
 async def register(name, websocket):
     if name in CLIENTS:
@@ -17,6 +19,7 @@ async def register(name, websocket):
     else:
         print("NEW CLIENT: " + name)
         CLIENTS[name] = websocket
+        await notify_new_user(name)
 
 async def unregister(websocket):
     # Remove client and corresponding websocket from dict of clients

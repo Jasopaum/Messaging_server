@@ -20,8 +20,12 @@ async def unregister(websocket):
 """
 
 async def send_msg(src, dst, msg):
-    to_send = json.dumps({"src": src, "msg": msg})
-    await CLIENTS[dst].send(to_send)
+    try:
+        to_send = json.dumps({"cmd": "recv", "src": src, "msg": msg})
+        await CLIENTS[dst].send(to_send)
+    except KeyError:
+        to_send = json.dumps({"cmd": "err", "msg": f"{dst} is not connected on this server."})
+        await CLIENTS[src].send(to_send)
 
 async def main(websocket, path):
     async for message in websocket:

@@ -50,7 +50,11 @@
             ws.onmessage = function(event) {
                 data = JSON.parse(event.data);
                 var textArea = document.getElementById("textArea");
-                textArea.value = textArea.value + data["src"] + " >> " + data["msg"] + "\n";
+                if (data["cmd"] == "recv") {
+                    textArea.value = textArea.value + data["src"] + " >> " + data["msg"] + "\n";
+                } else if (data["cmd"] == "err") {
+                    textArea.value = textArea.value + "Error: " + data["msg"] + "\n";
+                }
             };
         
         </script>

@@ -14,10 +14,13 @@ async def register(name, websocket):
     print("NEW CLIENT: " + name)
     CLIENTS[name] = websocket
 
-"""
 async def unregister(websocket):
-    pass
-"""
+    # Remove client and corresponding websocket from dict of clients
+    for k,v in CLIENTS.items():
+        if v == websocket:
+            v.close()
+            del CLIENTS[k]
+            break
 
 async def send_msg(src, dst, msg):
     try:
@@ -28,16 +31,19 @@ async def send_msg(src, dst, msg):
         await CLIENTS[src].send(to_send)
 
 async def main(websocket, path):
-    async for message in websocket:
-        message = json.loads(message)
-        
-        if message["cmd"] == "register":
-            # New client arrived
-            await register(message["name"], websocket)
+    try:
+        async for message in websocket:
+            message = json.loads(message)
+            
+            if message["cmd"] == "register":
+                # New client arrived
+                await register(message["name"], websocket)
 
-        elif message["cmd"] == "send":
-            # Client wants to send message
-            await send_msg(message["src"], message["dst"], message["msg"])
+            elif message["cmd"] == "send":
+                # Client wants to send message
+                await send_msg(message["src"], message["dst"], message["msg"])
+    except:
+        await unregister(websocket)
 
 start_server = websockets.serve(main, "localhost", 1234)
 

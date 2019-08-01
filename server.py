@@ -11,8 +11,12 @@ async def notify_users():
 """
 
 async def register(name, websocket):
-    print("NEW CLIENT: " + name)
-    CLIENTS[name] = websocket
+    if name in CLIENTS:
+        to_send = json.dumps({"cmd": "err", "msg": f"{name} is already connected on this server."})
+        await websocket.send(to_send)
+    else:
+        print("NEW CLIENT: " + name)
+        CLIENTS[name] = websocket
 
 async def unregister(websocket):
     # Remove client and corresponding websocket from dict of clients

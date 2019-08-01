@@ -1,0 +1,58 @@
+<html>
+    <head>
+        <title>Chat</title>
+    </head>
+    <body>
+        <form id="login" onsubmit="register(); return false;">
+            <pre> Who are you? </pre>
+            <input type="text" id="clientName" />
+            <input type="submit" />
+        </form>
+
+        <textarea readonly="true" id="textArea" style="resize:none" rows="20" cols="50" wrap="hard">
+        </textarea>
+        
+        <form id="chatbox" onsubmit="sendMessage(); return false;">
+            <pre> To: </pre>
+            <input type="text" id="recipient" />
+            <pre> Message: </pre>
+            <input type="text" id="message" />
+            <input type="submit" />
+        </form>
+        
+        <script>
+            var ws = new WebSocket("ws://127.0.0.1:1234/");
+            var clientName = "";
+
+            function register() {
+                clientName = document.getElementById("clientName").value;
+                ws.send(JSON.stringify({"cmd": "register",
+                                        "name": clientName}));
+            }
+
+            function sendMessage() {
+                if (clientName == "") {
+                    alert("Please login");
+                    return;
+                }
+                var recipient = document.getElementById("recipient").value;
+                var message = document.getElementById("message").value;
+                ws.send(JSON.stringify({"cmd": "send",
+                                        "src": clientName,
+                                        "dst": recipient,
+                                        "msg": message}));
+                
+                var textArea = document.getElementById("textArea");
+                textArea.value = textArea.value + "You >> " + recipient + ": " + message + "\n";
+                message.value = "";
+            }
+        
+            ws.onmessage = function(event) {
+                data = JSON.parse(event.data);
+                var textArea = document.getElementById("textArea");
+                textArea.value = textArea.value + data["src"] + " >> " + data["msg"] + "\n";
+            };
+        
+        </script>
+    </body>
+</html>

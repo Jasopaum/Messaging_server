@@ -10,10 +10,19 @@
             <input type="submit" />
         </form>
         
-        <textarea readonly="true" id="textArea" style="resize:none" rows="20" cols="50" wrap="hard">
-        </textarea>
-        <textarea readonly="true" id="presentUsers" style="resize:none" rows="20" cols="25" wrap="hard">
-        </textarea>
+        <table>
+            <tr>
+            <td>
+                <textarea readonly="true" id="textArea" style="resize:none" rows="20" cols="50" wrap="hard">
+                </textarea>
+            </td>
+            <td>
+                <ul id="presentUsers">
+                    <li onclick="clickUsr(this.innerText)"> click </li>
+                </ul>
+            </td>
+            </tr>
+        </table>
         
         <form id="chatbox" onsubmit="sendMessage(); return false;">
             <pre> To: </pre>
@@ -26,6 +35,10 @@
         <script>
             var ws = new WebSocket("ws://127.0.0.1:1234/");
             var clientName = "";
+            var textArea = document.getElementById("textArea");
+            var presentUsers = document.getElementById("presentUsers");
+            var recipient = document.getElementById("recipient");
+            var message = document.getElementById("message");
 
             function register() {
                 clientName = document.getElementById("clientName").value;
@@ -38,22 +51,18 @@
                     alert("Please login");
                     return;
                 }
-                var recipient = document.getElementById("recipient").value;
-                var message = document.getElementById("message").value;
                 ws.send(JSON.stringify({"cmd": "send",
                                         "src": clientName,
-                                        "dst": recipient,
-                                        "msg": message}));
+                                        "dst": recipient.value,
+                                        "msg": message.value}));
 
                 var textArea = document.getElementById("textArea");
-                textArea.value = textArea.value + "You >> " + recipient + ": " + message + "\n";
+                textArea.value = textArea.value + "You >> " + recipient.value + ": " + message.value + "\n";
                 message.value = "";
             }
 
             ws.onmessage = function(event) {
                 data = JSON.parse(event.data);
-                var textArea = document.getElementById("textArea");
-                var presentUsers = document.getElementById("presentUsers");
 
                 if (data["cmd"] == "recv") {
                     textArea.value = textArea.value + data["src"] + " >> " + data["msg"] + "\n";
@@ -61,13 +70,22 @@
                     textArea.value = textArea.value + "Error: " + data["msg"] + "\n";
                 } else if (data["cmd"] == "notifusr") {
                     // Do not display client name in list of users
-                    var otherUsers = data["usr"].filter(function(value, index, arr){
-                        return value != clientName;
+                    data["usrs"].forEach(function(usr) {
+                        if (usr != clientName) {
+                            var li = document.createElement("li");
+                            li.appendChild(document.createTextNode(usr));
+                            li.setAttribute("onclick", "clickUsr(this.innerText)");
+                            presentUsers.append(li)
+                        }
                     });
-                    presentUsers.value = otherUsers.join("\n");
                 }
             };
         
+            //handle click on user list
+            function clickUsr(destUsr) {
+                recipient.value = destUsr;
+            };
+
         </script>
     </body>
 </html>

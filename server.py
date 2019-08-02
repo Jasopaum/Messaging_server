@@ -8,7 +8,7 @@ CLIENTS = {}
 async def notify_new_user(name):
 
     list_users = [c for c in CLIENTS.keys()]
-    to_send = json.dumps({"cmd": "notifusr", "usr": list_users})
+    to_send = json.dumps({"cmd": "notifusr", "usrs": list_users})
     if CLIENTS:
         await asyncio.wait([c.send(to_send) for c in CLIENTS.values()])
 

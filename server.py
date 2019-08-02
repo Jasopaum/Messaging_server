@@ -7,7 +7,7 @@ CLIENTS = {}
 
 async def register(name, websocket):
     if name in CLIENTS:
-        to_send = json.dumps({"cmd": "err", "msg": f"{name} is already connected on this server."})
+        to_send = json.dumps({"cmd": "usedname", "msg": f"{name} is already connected on this server."})
         await websocket.send(to_send)
     else:
         await notify_new_user(name)
@@ -52,7 +52,7 @@ async def main(websocket, path):
     try:
         async for message in websocket:
             message = json.loads(message)
-            
+
             if message["cmd"] == "register":
                 # New client arrived
                 await register(message["name"], websocket)
@@ -60,6 +60,11 @@ async def main(websocket, path):
             elif message["cmd"] == "send":
                 # Client wants to send message
                 await send_msg(message["src"], message["dst"], message["msg"])
+
+            elif message["cmd"] == "unregister":
+                # Client wants to send message
+                await unregister(websocket)
+
     except:
         await unregister(websocket)
 

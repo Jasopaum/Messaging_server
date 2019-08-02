@@ -3,13 +3,15 @@
         <title>Chat</title>
     </head>
     <body>
-
-        <form id="login" onsubmit="register(); return false;">
-            <pre> Who are you? </pre>
-            <input type="text" id="clientName" />
-            <input type="submit" />
-        </form>
         
+        <form id="loginForm" onsubmit="login(); return false;">
+        Name: <input id="loginField" type="text">
+        <input type="button" onclick="login()" value="login">
+        </form>
+
+        <h1 id="hello"> </h1>
+        <input id="logout" type="button" onclick="logout()" value="logout" style="display: none;">
+
         <table>
             <tr>
             <td>
@@ -34,17 +36,32 @@
         <script>
             var ws = new WebSocket("ws://127.0.0.1:1234/");
             var clientName = "";
+
             var textArea = document.getElementById("textArea");
             var presentUsers = document.getElementById("presentUsers");
             var recipient = document.getElementById("recipient");
             var message = document.getElementById("message");
 
-            function register() {
-                clientName = document.getElementById("clientName").value;
+
+            function login() {
+                clientName = document.getElementById("loginField").value;
                 ws.send(JSON.stringify({"cmd": "register",
                                         "name": clientName}));
+                document.getElementById("loginForm").style.display = "None";
+                document.getElementById("logout").style.display = "block";
+                document.getElementById("hello").innerText = "Welcome, " + clientName;
             }
-
+        
+            function logout() {
+                clientName = "";
+                ws.send(JSON.stringify({"cmd": "unregister",
+                                        "name": clientName}));
+                presentUsers.innerHTML = "";
+                document.getElementById("hello").innerText = "";
+                document.getElementById("logout").style.display = "None";
+                document.getElementById("loginForm").style.display = "block";
+            }
+        
             function sendMessage() {
                 if (clientName == "") {
                     alert("Please login");
@@ -56,7 +73,7 @@
                                         "msg": message.value}));
 
                 var textArea = document.getElementById("textArea");
-                textArea.value = textArea.value + "You >> " + recipient.value + ": " + message.value + "\n";
+                textArea.value += "You >> " + recipient.value + ": " + message.value + "\n";
                 message.value = "";
             }
 
@@ -80,6 +97,11 @@
                 }
             }
 
+            function clickUsr(destUsr) {
+                //handle click on user list
+                recipient.value = destUsr;
+            };
+
             ws.onmessage = function(event) {
                 data = JSON.parse(event.data);
                 switch (data["cmd"]) {
@@ -92,17 +114,16 @@
                     case "rmusr":
                         removeUser(data["usr"]);
                         break;
+                    case "usedname":
+                        textArea.value += "Error: " + data["msg"] + "\n";
+                        logout();
+                        break;
                     case "err":
-                        textArea.value = textArea.value + "Error: " + data["msg"] + "\n";
+                        textArea.value += "Error: " + data["msg"] + "\n";
                         break;
                     default:
-                        textArea.value = textArea.value + "Error: corrupted websocket message";
+                        textArea.value += "Error: corrupted websocket message";
                 }
-            };
-        
-            //handle click on user list
-            function clickUsr(destUsr) {
-                recipient.value = destUsr;
             };
 
         </script>

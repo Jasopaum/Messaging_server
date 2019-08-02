@@ -5,21 +5,14 @@ import json
 CLIENTS = {}
 
 
-async def notify_new_user(name):
-
-    list_users = [c for c in CLIENTS.keys()]
-    to_send = json.dumps({"cmd": "notifusr", "usrs": list_users})
-    if CLIENTS:
-        await asyncio.wait([c.send(to_send) for c in CLIENTS.values()])
-
 async def register(name, websocket):
     if name in CLIENTS:
         to_send = json.dumps({"cmd": "err", "msg": f"{name} is already connected on this server."})
         await websocket.send(to_send)
     else:
-        print("NEW CLIENT: " + name)
-        CLIENTS[name] = websocket
         await notify_new_user(name)
+        await init_list_users(websocket)
+        CLIENTS[name] = websocket
 
 async def unregister(websocket):
     # Remove client and corresponding websocket from dict of clients
@@ -28,6 +21,24 @@ async def unregister(websocket):
             v.close()
             del CLIENTS[k]
             break
+    await notify_rm_user(k)  # k is the client who left
+
+async def notify_new_user(name):
+    # When a new client joins, add it to everybody's lists of users
+    to_send = json.dumps({"cmd": "addusr", "usr": [name]})
+    if CLIENTS:
+        await asyncio.wait([ws.send(to_send) for c, ws in CLIENTS.items()])
+
+async def init_list_users(ws):
+    # When a new client joins, init its list of users
+    to_send = json.dumps({"cmd": "addusr", "usr": list(CLIENTS.keys())})
+    if CLIENTS:
+        await ws.send(to_send)
+
+async def notify_rm_user(name):
+    to_send = json.dumps({"cmd": "rmusr", "usr": name})
+    if CLIENTS:
+        await asyncio.wait([c.send(to_send) for c in CLIENTS.values()])
 
 async def send_msg(src, dst, msg):
     try:

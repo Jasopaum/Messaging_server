@@ -18,7 +18,6 @@
             </td>
             <td>
                 <ul id="presentUsers">
-                    <li onclick="clickUsr(this.innerText)"> click </li>
                 </ul>
             </td>
             </tr>
@@ -61,23 +60,43 @@
                 message.value = "";
             }
 
+            function addUser(usrs) {
+                // Add user names to list of users
+                usrs.forEach(function(usr) {
+                    var li = document.createElement("li");
+                    li.appendChild(document.createTextNode(usr));
+                    li.setAttribute("onclick", "clickUsr(this.innerText)");
+                    presentUsers.append(li);
+                });
+            }
+        
+            function removeUser(usrToRm) {
+                // Remove client name from list of users
+                var listUsrs = presentUsers.getElementsByTagName("li");
+                for (var i = 0; i < listUsrs.length; ++i) {
+                    if (listUsrs[i].innerText == usrToRm) {
+                        presentUsers.removeChild(listUsrs[i]);
+                    }
+                }
+            }
+
             ws.onmessage = function(event) {
                 data = JSON.parse(event.data);
-
-                if (data["cmd"] == "recv") {
-                    textArea.value = textArea.value + data["src"] + " >> " + data["msg"] + "\n";
-                } else if (data["cmd"] == "err") {
-                    textArea.value = textArea.value + "Error: " + data["msg"] + "\n";
-                } else if (data["cmd"] == "notifusr") {
-                    // Do not display client name in list of users
-                    data["usrs"].forEach(function(usr) {
-                        if (usr != clientName) {
-                            var li = document.createElement("li");
-                            li.appendChild(document.createTextNode(usr));
-                            li.setAttribute("onclick", "clickUsr(this.innerText)");
-                            presentUsers.append(li)
-                        }
-                    });
+                switch (data["cmd"]) {
+                    case "recv":
+                        textArea.value = textArea.value + data["src"] + " >> " + data["msg"] + "\n";
+                        break;
+                    case "addusr":
+                        addUser(data["usr"]);
+                        break;
+                    case "rmusr":
+                        removeUser(data["usr"]);
+                        break;
+                    case "err":
+                        textArea.value = textArea.value + "Error: " + data["msg"] + "\n";
+                        break;
+                    default:
+                        textArea.value = textArea.value + "Error: corrupted websocket message";
                 }
             };
         

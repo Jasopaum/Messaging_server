@@ -1,4 +1,42 @@
 <html>
+    <style>
+        /* Style the tab */
+        .tab {
+            overflow: hidden;
+            border: 1px solid #ccc;
+            background-color: #f1f1f1;
+        }
+
+        /* Style the buttons that are used to open the tab content */
+        .tab button {
+            background-color: inherit;
+            float: left;
+            border: none;
+            outline: none;
+            cursor: pointer;
+            padding: 14px 16px;
+            transition: 0.3s;
+        }
+
+        /* Change background color of buttons on hover */
+        .tab button:hover {
+            background-color: #ddd;
+        }
+
+        /* Create an active/current tablink class */
+        .tab button.active {
+            background-color: #ccc;
+        }
+
+        /* Style the tab content */
+        .tabcontent {
+            display: none;
+            padding: 6px 12px;
+            border: 1px solid #ccc;
+            border-top: none;
+        }
+    </style>
+
     <head>
         <title>Chat</title>
     </head>
@@ -15,8 +53,16 @@
         <table>
             <tr>
             <td>
-                <textarea readonly="true" id="textArea" style="resize:none" rows="20" cols="50" wrap="hard">
-                </textarea>
+                <div class="tab" id="allTabs" style="width:400px">
+                    <button id="tabguide" class="tablinks" onclick="openDiscussion(event, 'guide')"> Guide </button>
+                </div>
+
+                <div id="tabContents" style="width:400px">
+                    <div class="tabcontent" id="tabcontentguide" style="display:block">
+                        <textarea id="msgsguide" readonly="true" style="resize:none" rows="20" cols="50" wrap="hard">Welcome the the chat app.
+                        </textarea>
+                    </div>
+                </div>
             </td>
             <td>
                 <ul id="presentUsers">
@@ -27,54 +73,80 @@
         
         <form id="chatbox" onsubmit="sendMessage(); return false;">
             <pre> To: </pre>
-            <input type="text" id="recipient" />
-            <pre> Message: </pre>
-            <input type="text" id="message" />
-            <input type="submit" />
+            <input type="text" id="recipient" style="width:125px;" />
+            <div>
+                <pre> Message: </pre>
+                <textarea id="message" style="resize:none" rows="3" cols="50" wrap="hard"></textarea>
+                <input type="submit" style="display: table;"/>
+            </div>
         </form>
-        
+
         <script>
             var ws = new WebSocket("ws://127.0.0.1:1234/");
             var clientName = "";
 
-            var textArea = document.getElementById("textArea");
+            var loginForm = document.getElementById("loginForm");
+            var lougoutButton = document.getElementById("logout");
+            var hello = document.getElementById("hello");
             var presentUsers = document.getElementById("presentUsers");
             var recipient = document.getElementById("recipient");
             var message = document.getElementById("message");
-
+            var tabs = document.getElementById("allTabs");
+            var tabContents = document.getElementById("tabContents");
 
             function login() {
                 clientName = document.getElementById("loginField").value;
                 ws.send(JSON.stringify({"cmd": "register",
                                         "name": clientName}));
-                document.getElementById("loginForm").style.display = "None";
-                document.getElementById("logout").style.display = "block";
-                document.getElementById("hello").innerText = "Welcome, " + clientName;
+                loginForm.style.display = "None";
+                lougoutButton.style.display = "block";
+                hello.innerText = "Welcome, " + clientName;
             }
-        
+
             function logout() {
                 clientName = "";
                 ws.send(JSON.stringify({"cmd": "unregister",
                                         "name": clientName}));
                 presentUsers.innerHTML = "";
-                document.getElementById("hello").innerText = "";
-                document.getElementById("logout").style.display = "None";
-                document.getElementById("loginForm").style.display = "block";
+                presentUsers.innerHTML = "";
+                presentUsers.innerHTML = "";
+                hello.innerText = "";
+                lougoutButton.style.display = "None";
+                loginForm.style.display = "block";
+                allTabs.innerHTML = "<button id=tabguide class='tablinks' onclick='openDiscussion(event, 'guide')'> Guide </button>";
+                tabContents.innerHTML = "<div class='tabcontent' id='tabcontentguide' style='display:block'> \
+                    <textarea id='msgsguide' readonly='true' style='resize:none' rows='20' cols='50' wrap='hard'>Welcome the the chat app. \
+                    </textarea> \
+                    </div>";
             }
-        
+
             function sendMessage() {
                 if (clientName == "") {
                     alert("Please login");
                     return;
                 }
+
                 ws.send(JSON.stringify({"cmd": "send",
                                         "src": clientName,
                                         "dst": recipient.value,
                                         "msg": message.value}));
-
-                var textArea = document.getElementById("textArea");
-                textArea.value += "You >> " + recipient.value + ": " + message.value + "\n";
+                                        
+                var msgArea = document.getElementById("msgs" + recipient.value);
+                if (msgArea == null) {
+                    addTabDiscussion(recipient.value);
+                    msgArea = document.getElementById("msgs" + recipient.value);
+                }
+                msgArea.value += "You >> " + recipient.value + ": " + message.value + "\n";
                 message.value = "";
+            }
+
+            function receiveMsg(src, msg) {
+                var msgArea = document.getElementById("msgs" + src);
+                if (msgArea == null) {
+                    addTabDiscussion(src);
+                    msgArea = document.getElementById("msgs" + src);
+                }
+                msgArea.value += src + ">> " + msg + "\n";
             }
 
             function addUser(usrs) {
@@ -86,7 +158,7 @@
                     presentUsers.append(li);
                 });
             }
-        
+
             function removeUser(usrToRm) {
                 // Remove client name from list of users
                 var listUsrs = presentUsers.getElementsByTagName("li");
@@ -102,11 +174,42 @@
                 recipient.value = destUsr;
             };
 
+            function addTabDiscussion(name) {
+                allTabs.innerHTML +=
+                    `<button id="tab${name}" class="tablinks" onclick="openDiscussion(event, '${name}')"> ${name} </button>`;
+
+                var tabContentDiv = document.createElement("div");
+                tabContentDiv.className = "tabcontent";
+                tabContentDiv.id = "tabcontent" + name;
+                tabContentDiv.innerHTML =
+                    `<textarea id=msgs${name} readonly="true" style="resize:none" \
+                    rows="20" cols="50" wrap="hard"></textarea>`
+                tabContents.appendChild(tabContentDiv);
+            }
+
+            function openDiscussion(evt, user) {
+                // Get all elements with class="tabcontent" and hide them
+                var tabcontent = document.getElementsByClassName("tabcontent");
+                for (var i = 0; i < tabcontent.length; i++) {
+                    tabcontent[i].style.display = "none";
+                }
+
+                // Get all elements with class="tablinks" and remove the class "active"
+                var tablinks = document.getElementsByClassName("tablinks");
+                for (var i = 0; i < tablinks.length; i++) {
+                    tablinks[i].className = tablinks[i].className.replace(" active", "");
+                }
+
+                // Show the current tab, and add an "active" class to the button that opened the tab
+                document.getElementById("tabcontent" + user).style.display = "block";
+                evt.currentTarget.className += " active";
+            }
+
             ws.onmessage = function(event) {
                 data = JSON.parse(event.data);
                 switch (data["cmd"]) {
                     case "recv":
-                        textArea.value = textArea.value + data["src"] + " >> " + data["msg"] + "\n";
+                        receiveMsg(data["src"], data["msg"]);
                         break;
                     case "addusr":
                         addUser(data["usr"]);
@@ -115,14 +218,15 @@
                         removeUser(data["usr"]);
                         break;
                     case "usedname":
-                        textArea.value += "Error: " + data["msg"] + "\n";
+                        alert("Error: " + data["usr"] + " is already connected on the server.\n");
                         logout();
                         break;
-                    case "err":
-                        textArea.value += "Error: " + data["msg"] + "\n";
+                    case "nousr":
+                        var msgArea = document.getElementById("msgs" + data["usr"]);
+                        alert("Error: " + data["usr"] + " not connected to this server.\n");
+                        allTabs.removeChild(document.getElementById("tab" + data["usr"]));
+                        tabContents.removeChild(document.getElementById("tabcontent" + data["usr"]));
                         break;
-                    default:
-                        textArea.value += "Error: corrupted websocket message";
                 }
             };
 

@@ -7,7 +7,7 @@ CLIENTS = {}
 
 async def register(name, websocket):
     if name in CLIENTS:
-        to_send = json.dumps({"cmd": "usedname", "msg": f"{name} is already connected on this server."})
+        to_send = json.dumps({"cmd": "usedname", "usr": f"{name}"})
         await websocket.send(to_send)
     else:
         await notify_new_user(name)
@@ -45,7 +45,7 @@ async def send_msg(src, dst, msg):
         to_send = json.dumps({"cmd": "recv", "src": src, "msg": msg})
         await CLIENTS[dst].send(to_send)
     except KeyError:
-        to_send = json.dumps({"cmd": "err", "msg": f"{dst} is not connected on this server."})
+        to_send = json.dumps({"cmd": "nousr", "usr": dst})
         await CLIENTS[src].send(to_send)
 
 async def main(websocket, path):

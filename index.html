@@ -27,6 +27,11 @@
         .tab button.active {
             background-color: #ccc;
         }
+    
+        /* Change background color of notified tabs */
+        .tab button.notified {
+            background-color: #aaa;
+        }
 
         /* Style the tab content */
         .tabcontent {
@@ -47,9 +52,11 @@
         <input type="button" onclick="login()" value="login">
         </form>
 
-        <h1 id="hello"> </h1>
-        <input id="logout" type="button" onclick="logout()" value="logout" style="display: none;">
-
+        <div>
+            <h1 id="hello"> </h1>
+            <input id="logout" type="button" onclick="logout()" value="logout" style="display: none;">
+        </div>
+        
         <table>
             <tr>
             <td>
@@ -95,6 +102,9 @@
             var tabContents = document.getElementById("tabContents");
 
             function login() {
+                /* When the user logs in, we have to initialize its name, send the information to
+                the server and change a bit the interface.
+                */
                 clientName = document.getElementById("loginField").value;
                 ws.send(JSON.stringify({"cmd": "register",
                                         "name": clientName}));
@@ -104,6 +114,9 @@
             }
 
             function logout() {
+                 /* When the user logs out, we need to send the information to the server and
+                 reinitialize the interface.
+                */
                 clientName = "";
                 ws.send(JSON.stringify({"cmd": "unregister",
                                         "name": clientName}));
@@ -121,7 +134,12 @@
             }
 
             function sendMessage() {
+                 /* Send a websocket message containing the user's message
+                 The message is also written in the tab content of the conversation with
+                 the recipient (after having been created if it didn't exist)
+                */
                 if (clientName == "") {
+                    // Verify that the user is connected
                     alert("Please login");
                     return;
                 }
@@ -141,16 +159,23 @@
             }
 
             function receiveMsg(src, msg) {
+                 /* When a message is received from another user, we need to
+                 add it to the tab content (after having created the conversation if
+                 it didn't exist)
+                */
                 var msgArea = document.getElementById("msgs" + src);
                 if (msgArea == null) {
                     addTabDiscussion(src);
                     msgArea = document.getElementById("msgs" + src);
                 }
                 msgArea.value += src + ">> " + msg + "\n";
+                // Notify user by changinf tab color
+                document.getElementById("tab" + src).className += " active";
             }
 
             function addUser(usrs) {
-                // Add user names to list of users
+                 /* Add user names to list of users
+                */
                 usrs.forEach(function(usr) {
                     var li = document.createElement("li");
                     li.appendChild(document.createTextNode(usr));
@@ -160,7 +185,8 @@
             }
 
             function removeUser(usrToRm) {
-                // Remove client name from list of users
+                 /* Remove client name from list of users
+                */
                 var listUsrs = presentUsers.getElementsByTagName("li");
                 for (var i = 0; i < listUsrs.length; ++i) {
                     if (listUsrs[i].innerText == usrToRm) {
@@ -170,11 +196,15 @@
             }
 
             function clickUsr(destUsr) {
-                //handle click on user list
+                 /* Sets the content of recipient textArea to the name clicked on
+                */
                 recipient.value = destUsr;
             };
 
             function addTabDiscussion(name) {
+                 /* When the user receives or sends a message and the conversation does not
+                 exist, we need to create it
+                */
                 allTabs.innerHTML +=
                     `<button id="tab${name}" class="tablinks" onclick="openDiscussion(event, '${name}')"> ${name} </button>`;
 
@@ -182,12 +212,21 @@
                 tabContentDiv.className = "tabcontent";
                 tabContentDiv.id = "tabcontent" + name;
                 tabContentDiv.innerHTML =
-                    `<textarea id=msgs${name} readonly="true" style="resize:none" \
+                    `<span onclick="closeTab('${name}')"> close </span>
+                    <textarea id=msgs${name} readonly="true" style="resize:none" \
                     rows="20" cols="50" wrap="hard"></textarea>`
                 tabContents.appendChild(tabContentDiv);
             }
+        
+            function closeTab(name) {
+                allTabs.removeChild(document.getElementById("tab" + name));
+                tabContents.removeChild(document.getElementById("tabcontent" + name));
+            }
 
             function openDiscussion(evt, user) {
+                 /* When user clicks on a tab, the corresponding discussion needs to be opened
+                 and the others closed.
+                */
                 // Get all elements with class="tabcontent" and hide them
                 var tabcontent = document.getElementsByClassName("tabcontent");
                 for (var i = 0; i < tabcontent.length; i++) {
@@ -206,6 +245,9 @@
             }
 
             ws.onmessage = function(event) {
+                 /* When a message is received from a websocket, it is read and
+                 the cmd field tells what type of message was sent and what to do.
+                */
                 data = JSON.parse(event.data);
                 switch (data["cmd"]) {
                     case "recv":
@@ -224,9 +266,10 @@
                     case "nousr":
                         var msgArea = document.getElementById("msgs" + data["usr"]);
                         alert("Error: " + data["usr"] + " not connected to this server.\n");
-                        allTabs.removeChild(document.getElementById("tab" + data["usr"]));
-                        tabContents.removeChild(document.getElementById("tabcontent" + data["usr"]));
+                        closeTab(data["usr"]);
                         break;
+                    default:
+                        alert("Alert: Received a corrupted websocket message.")
                 }
             };
 

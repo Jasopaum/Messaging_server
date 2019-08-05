@@ -6,6 +6,12 @@ Each user can send a message to a specified user after having logged in.
 
 ## Usage
 
+- Run `python3 server.py`
+
+- You can instantiate several clients by connecting to localhost, port 1234, in a web browser.
+
+- Use the chat serive.
+
 ## Details
 
 The backend server is implemented in Python3 and uses the asyncio library.

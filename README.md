@@ -18,4 +18,14 @@ The backend server is implemented in Python3 and uses the asyncio library.
 
 The client is implemented in a web browser (basic combination of HTML and JavaScript).
 
-Clients and server communicate via websockets.
+The server is a central actor in the system, all the messages transit here and client cannot communicate directly wih each other. Clients and server communicate via websockets.
+
+## Requirements
+
+Python3 and the websockets library are needed to run this project (I used Python version 3.7.3 and websockets version 7.0 when working on it).
+
+## Possible further work
+
+- Implement the server part in Go.
+
+- Have a database to store historic of messages.

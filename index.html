@@ -61,12 +61,14 @@
             <tr>
             <td>
                 <div class="tab" id="allTabs" style="width:400px">
-                    <button id="tabguide" class="tablinks" onclick="openDiscussion(event, 'guide')"> Guide </button>
+                    <button id="tab__help__" class="tablinks" onclick="openDiscussion(event, '__help__')"> Help </button>
                 </div>
 
                 <div id="tabContents" style="width:400px">
-                    <div class="tabcontent" id="tabcontentguide" style="display:block">
-                        <textarea id="msgsguide" readonly="true" style="resize:none" rows="20" cols="50" wrap="hard">Welcome the the chat app.
+                    <div class="tabcontent" id="tabcontent__help__" style="display:block">
+                        <textarea id="msgs__help__" readonly="true" style="resize:none" rows="20" cols="50" wrap="hard">
+Welcome the the chat app.
+You can send messages to every other connected users after having logged in.
                         </textarea>
                     </div>
                 </div>
@@ -126,10 +128,13 @@
                 hello.innerText = "";
                 lougoutButton.style.display = "None";
                 loginForm.style.display = "block";
-                allTabs.innerHTML = "<button id=tabguide class='tablinks' onclick='openDiscussion(event, 'guide')'> Guide </button>";
-                tabContents.innerHTML = "<div class='tabcontent' id='tabcontentguide' style='display:block'> \
-                    <textarea id='msgsguide' readonly='true' style='resize:none' rows='20' cols='50' wrap='hard'>Welcome the the chat app. \
-                    </textarea> \
+                allTabs.innerHTML = "<button id=tab__help__ class='tablinks' onclick='openDiscussion(event, '__help__')'> Help </button>";
+                tabContents.innerHTML = " \
+                    <div class='tabcontent' id='tabcontent__help__' style='display:block'> \
+                        <textarea id='msgs__help__' readonly='true' style='resize:none' rows='20' cols='50' wrap='hard'> \
+Welcome the the chat app. \
+You can send messages to every other connected users after having logged in. \
+                        </textarea> \
                     </div>";
             }
 
@@ -221,7 +226,7 @@
             function closeTab(name) {
                 allTabs.removeChild(document.getElementById("tab" + name));
                 tabContents.removeChild(document.getElementById("tabcontent" + name));
-                document.getElementById("tabguide").click();
+                document.getElementById("tab__help__").click();
             }
 
             function openDiscussion(evt, user) {

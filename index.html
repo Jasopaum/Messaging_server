@@ -179,7 +179,7 @@
                 usrs.forEach(function(usr) {
                     var li = document.createElement("li");
                     li.appendChild(document.createTextNode(usr));
-                    li.setAttribute("onclick", "clickUsr(this.innerText)");
+                    li.setAttribute("onclick", "setRecipient(this.innerText)");
                     presentUsers.append(li);
                 });
             }
@@ -195,7 +195,7 @@
                 }
             }
 
-            function clickUsr(destUsr) {
+            function setRecipient(destUsr) {
                  /* Sets the content of recipient textArea to the name clicked on
                 */
                 recipient.value = destUsr;
@@ -206,7 +206,7 @@
                  exist, we need to create it
                 */
                 allTabs.innerHTML +=
-                    `<button id="tab${name}" class="tablinks" onclick="openDiscussion(event, '${name}')"> ${name} </button>`;
+                    `<button id="tab${name}" class="tablinks" onclick="openDiscussion(event, '${name}'); setRecipient('${name}')"> ${name} </button>`;
 
                 var tabContentDiv = document.createElement("div");
                 tabContentDiv.className = "tabcontent";

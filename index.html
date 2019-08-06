@@ -221,6 +221,7 @@
             function closeTab(name) {
                 allTabs.removeChild(document.getElementById("tab" + name));
                 tabContents.removeChild(document.getElementById("tabcontent" + name));
+                document.getElementById("tabguide").click();
             }
 
             function openDiscussion(evt, user) {

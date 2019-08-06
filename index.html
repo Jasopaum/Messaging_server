@@ -251,19 +251,24 @@
                 data = JSON.parse(event.data);
                 switch (data["cmd"]) {
                     case "recv":
+                        // The client receives a message from another user
                         receiveMsg(data["src"], data["msg"]);
                         break;
                     case "addusr":
+                        // A new user arrived on the server
                         addUser(data["usr"]);
                         break;
                     case "rmusr":
+                        // A user left the server
                         removeUser(data["usr"]);
                         break;
                     case "usedname":
+                        // The name chosen is already used on the server
                         alert("Error: " + data["usr"] + " is already connected on the server.\n");
                         logout();
                         break;
                     case "nousr":
+                        // The destination user does not exist on the server
                         var msgArea = document.getElementById("msgs" + data["usr"]);
                         alert("Error: " + data["usr"] + " not connected to this server.\n");
                         closeTab(data["usr"]);
